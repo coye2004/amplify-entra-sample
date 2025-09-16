@@ -1,0 +1,21 @@
+{
+  "name": "amplify-entra-sample",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npx ampx sandbox",
+    "deploy": "npx ampx push",
+    "secrets:add": "npx ampx secret add"
+  },
+  "dependencies": {
+    "aws-amplify": "^6.15.6",
+    "vite": "^7.1.5"
+  },
+  "devDependencies": {
+    "@aws-amplify/backend": "^1.16.1",
+    "@aws-amplify/backend-cli": "^1.8.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amplify Entra ID Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.loading {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Amplify + Microsoft Entra ID Test</h1>
+        
+        <div id="status" class="status loading">
+            Initializing Amplify...
+        </div>
+
+        <div>
+            <button id="loginBtn" class="button" disabled>Login with Microsoft</button>
+            <button id="logoutBtn" class="button" disabled>Logout</button>
+            <button id="testFunctionBtn" class="button" disabled>Test Lambda Function</button>
+        </div>
+
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        // This will be populated by the Amplify sandbox
+        import { Amplify } from 'aws-amplify';
+        import { signInWithRedirect, signOut, fetchAuthSession } from 'aws-amplify/auth';
+        
+        // Load the actual amplify_outputs from your sandbox
+        const amplifyConfig = {
+            Auth: {
+                Cognito: {
+                    userPoolId: 'us-west-2_1DAbGzRVO',
+                    userPoolClientId: '1hn7n2kj9khg0cqkrk35jitpd',
+                    loginWith: {
+                        oauth: {
+                            domain: '34803b7bf5170c140bb2.auth.us-west-2.amazoncognito.com',
+                            scopes: ['openid', 'profile', 'email'],
+                            redirectSignIn: ['http://localhost:5174/'],
+                            redirectSignOut: ['http://localhost:5174/'],
+                            responseType: 'code'
+                        },
+                        email: true
+                    }
+                }
+            }
+        };
+
+        async function initializeAmplify() {
+            try {
+                // Try to load the actual amplify_outputs file
+                const response = await fetch('./amplify_outputs.json');
+                if (response.ok) {
+                    const config = await response.json();
+                    Amplify.configure(config);
+                } else {
+                    // Fallback to manual config
+                    Amplify.configure(amplifyConfig);
+                }
+                
+                updateStatus('Amplify initialized successfully!', 'success');
+                updateButtons(true);
+            } catch (error) {
+                updateStatus(`Failed to initialize Amplify: ${error.message}`, 'error');
+                showResult(`Error: ${error.message}\n\nMake sure you have:\n1. Started the Amplify sandbox (npm run dev)\n2. Updated the amplify_outputs.json file\n3. Set up your Microsoft Entra ID secrets`, 'error');
+            }
+        }
+
+        function updateStatus(message, type = 'loading') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function updateButtons(enabled) {
+            document.getElementById('loginBtn').disabled = !enabled;
+            document.getElementById('logoutBtn').disabled = !enabled;
+            document.getElementById('testFunctionBtn').disabled = !enabled;
+        }
+
+        function showResult(content, type = '') {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = content;
+            resultEl.className = `result ${type}`;
+            resultEl.style.display = 'block';
+        }
+
+        async function login() {
+            try {
+                updateStatus('Redirecting to Microsoft login...', 'loading');
+                await signInWithRedirect({
+                    provider: 'AutodeskEntra'
+                });
+            } catch (error) {
+                updateStatus('Login failed', 'error');
+                showResult(`Login error: ${error.message}`, 'error');
+            }
+        }
+
+        // Function to decode JWT token
+        function decodeJWT(token) {
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    throw new Error('Invalid JWT format');
+                }
+                
+                const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+                const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                
+                return { header, payload };
+            } catch (error) {
+                return { error: error.message };
+            }
+        }
+
+        // Check for JWT token in URL parameters
+        function checkForJWTInURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idToken = urlParams.get('id_token');
+            const errorDescription = urlParams.get('error_description');
+            
+            // Show current URL parameters for debugging
+            showResult(`Current URL Parameters:\n${window.location.search}\n\nError Description: ${errorDescription}`, 'error');
+            
+            if (idToken) {
+                const decoded = decodeJWT(idToken);
+                showResult(`JWT Token Found in URL:\n\nHeader: ${JSON.stringify(decoded.header, null, 2)}\n\nPayload: ${JSON.stringify(decoded.payload, null, 2)}`, 'success');
+                
+                if (decoded.payload && decoded.payload.aud) {
+                    showResult(`AUDIENCE (aud) in JWT: ${decoded.payload.aud}`, 'success');
+                }
+            } else {
+                showResult(`No id_token found in URL. The error shows aud=[77c7579a-8d92-4863-ac02-93d06c76dacc]\n\nThis means the JWT token's audience is: 77c7579a-8d92-4863-ac02-93d06c76dacc\n\nBut Cognito expects a different audience.`, 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                updateStatus('Logging out...', 'loading');
+                await signOut();
+                updateStatus('Logged out successfully', 'success');
+                showResult('You have been logged out successfully.');
+            } catch (error) {
+                updateStatus('Logout failed', 'error');
+                showResult(`Logout error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFunction() {
+            try {
+                updateStatus('Testing Lambda function...', 'loading');
+                
+                // Get the current user's session
+                const session = await fetchAuthSession();
+                const token = session.tokens?.idToken?.toString();
+                
+                if (!token) {
+                    throw new Error('No authentication token found. Please login first.');
+                }
+
+                // Call your Lambda function
+                const response = await fetch('YOUR_FUNCTION_URL', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                updateStatus('Function test completed', 'success');
+                showResult(`Function Response:\n${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (error) {
+                updateStatus('Function test failed', 'error');
+                showResult(`Function error: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('testFunctionBtn').addEventListener('click', testFunction);
+
+        // Initialize on page load
+        initializeAmplify();
+        
+        // Check for JWT token in URL parameters
+        checkForJWTInURL();
+    </script>
+</body>
+</html>
