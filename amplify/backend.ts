@@ -2,7 +2,7 @@ import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { IAspect, CfnResource, Aspects } from 'aws-cdk-lib';
 import { IConstruct } from 'constructs';
-//import { myFunction } from './functions/my-function/resource';
+import { myFunction } from './functions/my-function/resource';
 
 // CDK Aspect to automatically apply ADSK-Boundary to all IAM roles
 class PermissionsBoundaryAspect implements IAspect {
@@ -20,7 +20,8 @@ class PermissionsBoundaryAspect implements IAspect {
 }
 
 export const backend = defineBackend({
-  auth
+  auth,
+  myFunction,
 });
 
 const ADSK_BOUNDARY_ARN = 'arn:aws:iam::720853352242:policy/ADSK-Boundary';

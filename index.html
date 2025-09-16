@@ -77,7 +77,7 @@
         <div>
             <button id="loginBtn" class="button" disabled>Login with Microsoft</button>
             <button id="logoutBtn" class="button" disabled>Logout</button>
-            <button id="testFunctionBtn" class="button" disabled>Test Lambda Function</button>
+            <button id="testFunctionBtn" class="button" disabled>Test Authentication</button>
         </div>
 
         <div id="result" class="result" style="display: none;"></div>
@@ -233,7 +233,7 @@
 
         async function testFunction() {
             try {
-                updateStatus('Testing Lambda function...', 'loading');
+                updateStatus('Testing authentication...', 'loading');
                 
                 // Get the current user's session
                 const session = await fetchAuthSession();
@@ -243,21 +243,19 @@
                     throw new Error('No authentication token found. Please login first.');
                 }
 
-                // Call your Lambda function
-                const response = await fetch('YOUR_FUNCTION_URL', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const result = await response.json();
-                updateStatus('Function test completed', 'success');
-                showResult(`Function Response:\n${JSON.stringify(result, null, 2)}`, 'success');
+                // Decode the token to show user information
+                const decoded = decodeJWT(token);
+                
+                updateStatus('Authentication test completed', 'success');
+                showResult(`✅ Authentication Working!\n\nUser Information:\n${JSON.stringify({
+                    email: decoded.payload.email,
+                    username: decoded.payload['cognito:username'],
+                    groups: decoded.payload['cognito:groups'],
+                    verified: decoded.payload.email_verified
+                }, null, 2)}`, 'success');
             } catch (error) {
-                updateStatus('Function test failed', 'error');
-                showResult(`Function error: ${error.message}`, 'error');
+                updateStatus('Authentication test failed', 'error');
+                showResult(`Test error: ${error.message}`, 'error');
             }
         }
 
