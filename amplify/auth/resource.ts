@@ -11,11 +11,16 @@ export const auth = defineAuth({
       // OIDC IdP definition
       oidc: [
         {
-          name: 'AutodeskEntra',
-          issuerUrl: 'https://login.microsoftonline.com/87b99afb-a707-40ce-9edb-59da9c64c857/v2.0',
+          name: 'AutodeskEntraID',
           clientId: secret('AUTODESK_ENTRA_ID_CLIENT_ID'),
           clientSecret: secret('AUTODESK_ENTRA_ID_CLIENT_SECRET'),
+          issuerUrl: 'https://login.microsoftonline.com/87b99afb-a707-40ce-9edb-59da9c64c857/v2.0',
           scopes: ['openid', 'profile', 'email'],
+          attributeMapping: {
+            email: 'email',
+            givenName: 'given_name',
+            familyName: 'family_name',
+          },
         },
       ],
     },
