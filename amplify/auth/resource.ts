@@ -5,8 +5,8 @@ export const auth = defineAuth({
   loginWith: {
     email: true,
     externalProviders: {
-      callbackUrls: ['http://localhost:5174/'],
-      logoutUrls: ['http://localhost:5174/'],
+      callbackUrls: ['http://localhost:5174/','https://main.d2j5lex9wj9ikc.amplifyapp.com'],
+      logoutUrls: ['http://localhost:5174/','https://main.d2j5lex9wj9ikc.amplifyapp.com'],
       oidc: [
         {
           name: 'AutodeskEntra',
