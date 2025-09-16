@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "npx ampx sandbox",
     "deploy": "npx ampx push",
@@ -12,7 +15,8 @@
   },
   "dependencies": {
     "aws-amplify": "^6.15.6",
-    "vite": "^7.1.5"
+    "vite": "^7.1.5",
+    "@aws-sdk/client-lambda": "^3.0.0"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.16.1",

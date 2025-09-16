@@ -4,6 +4,7 @@ frontend:
     preBuild:
       commands:
         - npm ci
+        - npm install -g vite@latest
     build:
       commands:
         - npm run build

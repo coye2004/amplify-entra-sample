@@ -77,7 +77,8 @@
         <div>
             <button id="loginBtn" class="button" disabled>Login with Microsoft</button>
             <button id="logoutBtn" class="button" disabled>Logout</button>
-            <button id="testFunctionBtn" class="button" disabled>Test Authentication</button>
+            <button id="testFunctionBtn" class="button" disabled>Test GraphQL API</button>
+            <button id="getUserInfoBtn" class="button" disabled>Get User Info</button>
         </div>
 
         <div id="result" class="result" style="display: none;"></div>
@@ -138,6 +139,7 @@
             document.getElementById('loginBtn').disabled = !enabled;
             document.getElementById('logoutBtn').disabled = !enabled;
             document.getElementById('testFunctionBtn').disabled = !enabled;
+            document.getElementById('getUserInfoBtn').disabled = !enabled;
         }
 
         function showResult(content, type = '') {
@@ -211,6 +213,7 @@
                     document.getElementById('loginBtn').style.display = 'none';
                     document.getElementById('logoutBtn').style.display = 'inline-block';
                     document.getElementById('testFunctionBtn').style.display = 'inline-block';
+                    document.getElementById('getUserInfoBtn').style.display = 'inline-block';
                 } else {
                     showResult('Not authenticated. Click "Login with Microsoft" to authenticate.', 'info');
                 }
@@ -233,7 +236,7 @@
 
         async function testFunction() {
             try {
-                updateStatus('Testing authentication...', 'loading');
+                updateStatus('Testing GraphQL API...', 'loading');
                 
                 // Get the current user's session
                 const session = await fetchAuthSession();
@@ -243,19 +246,60 @@
                     throw new Error('No authentication token found. Please login first.');
                 }
 
-                // Decode the token to show user information
-                const decoded = decodeJWT(token);
+                // Import Amplify GraphQL API
+                const { generateClient } = await import('aws-amplify/api');
+                const client = generateClient();
                 
-                updateStatus('Authentication test completed', 'success');
-                showResult(`✅ Authentication Working!\n\nUser Information:\n${JSON.stringify({
-                    email: decoded.payload.email,
-                    username: decoded.payload['cognito:username'],
-                    groups: decoded.payload['cognito:groups'],
-                    verified: decoded.payload.email_verified
-                }, null, 2)}`, 'success');
+                // Call the GraphQL mutation
+                const result = await client.graphql({
+                    query: `
+                        mutation TestFunction($input: String) {
+                            testFunction(input: $input)
+                        }
+                    `,
+                    variables: {
+                        input: 'Hello from GraphQL frontend!'
+                    }
+                });
+                
+                updateStatus('GraphQL API test completed', 'success');
+                showResult(`✅ GraphQL API Response:\n${JSON.stringify(result.data, null, 2)}`, 'success');
             } catch (error) {
-                updateStatus('Authentication test failed', 'error');
-                showResult(`Test error: ${error.message}`, 'error');
+                updateStatus('GraphQL API test failed', 'error');
+                showResult(`GraphQL error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getUserInfo() {
+            try {
+                updateStatus('Getting user info...', 'loading');
+                
+                // Get the current user's session
+                const session = await fetchAuthSession();
+                const token = session.tokens?.idToken?.toString();
+                
+                if (!token) {
+                    throw new Error('No authentication token found. Please login first.');
+                }
+
+                // Import Amplify GraphQL API
+                const { generateClient } = await import('aws-amplify/api');
+                const client = generateClient();
+                
+                // Call the GraphQL mutation
+                const result = await client.graphql({
+                    query: `
+                        mutation GetUserInfo {
+                            getUserInfo
+                        }
+                    `
+                });
+                
+                updateStatus('User info retrieved', 'success');
+                showResult(`✅ User Information:\n${JSON.stringify(result.data, null, 2)}`, 'success');
+            } catch (error) {
+                updateStatus('Get user info failed', 'error');
+                showResult(`Error: ${error.message}`, 'error');
             }
         }
 
@@ -263,6 +307,7 @@
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
         document.getElementById('testFunctionBtn').addEventListener('click', testFunction);
+        document.getElementById('getUserInfoBtn').addEventListener('click', getUserInfo);
 
         // Initialize on page load
         initializeAmplify();
