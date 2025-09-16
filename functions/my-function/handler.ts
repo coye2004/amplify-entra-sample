@@ -6,7 +6,12 @@ export const handler = async (event: any) => {
   console.log('GraphQL Event:', JSON.stringify(event, null, 2));
   
   // Handle different GraphQL operations
-  const fieldName = event.info?.fieldName;
+  // Try multiple possible field name locations
+  const fieldName = event.info?.fieldName || event.fieldName || event.operationName;
+  
+  console.log('Field Name:', fieldName);
+  console.log('Event Info:', event.info);
+  console.log('Event Arguments:', event.arguments);
   
   switch (fieldName) {
     case 'testFunction':
@@ -18,7 +23,12 @@ export const handler = async (event: any) => {
         runtimeEnv,
         hasSecret: Boolean(clientSecret && clientSecret.length > 0),
         timestamp: new Date().toISOString(),
-        operation: 'testFunction'
+        operation: 'testFunction',
+        debug: {
+          fieldName: fieldName,
+          arguments: event.arguments,
+          info: event.info
+        }
       };
       
     case 'getUserInfo':
@@ -36,14 +46,23 @@ export const handler = async (event: any) => {
         runtimeEnv,
         hasSecret: Boolean(clientSecret && clientSecret.length > 0),
         timestamp: new Date().toISOString(),
-        operation: 'getUserInfo'
+        operation: 'getUserInfo',
+        debug: {
+          fieldName: fieldName,
+          identity: event.identity
+        }
       };
       
     default:
       return {
         ok: false,
         message: `Unknown operation: ${fieldName}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        debug: {
+          fieldName: fieldName,
+          eventKeys: Object.keys(event),
+          fullEvent: event
+        }
       };
   }
 };
