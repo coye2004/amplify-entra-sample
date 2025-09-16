@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "npx ampx sandbox",
     "deploy": "npx ampx push",
-    "secrets:add": "npx ampx secret add"
+    "secrets:add": "npx ampx secret add",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "aws-amplify": "^6.15.6",
