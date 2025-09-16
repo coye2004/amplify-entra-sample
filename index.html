@@ -176,24 +176,46 @@
             }
         }
 
-        // Check for JWT token in URL parameters
-        function checkForJWTInURL() {
+        // Check for authentication status and JWT token
+        async function checkAuthenticationStatus() {
             const urlParams = new URLSearchParams(window.location.search);
-            const idToken = urlParams.get('id_token');
             const errorDescription = urlParams.get('error_description');
+            const code = urlParams.get('code');
             
-            // Show current URL parameters for debugging
-            showResult(`Current URL Parameters:\n${window.location.search}\n\nError Description: ${errorDescription}`, 'error');
+            // Debug: Show URL parameters
+            showResult(`URL Parameters:\n${window.location.search}\n\nCode present: ${!!code}\nError: ${errorDescription || 'None'}`, 'info');
             
-            if (idToken) {
-                const decoded = decodeJWT(idToken);
-                showResult(`JWT Token Found in URL:\n\nHeader: ${JSON.stringify(decoded.header, null, 2)}\n\nPayload: ${JSON.stringify(decoded.payload, null, 2)}`, 'success');
+            if (errorDescription) {
+                showResult(`Authentication Error:\n${decodeURIComponent(errorDescription)}`, 'error');
+                return;
+            }
+            
+            try {
+                // Check if user is already authenticated
+                const session = await fetchAuthSession();
+                showResult(`Session check result:\n${JSON.stringify({
+                    hasSession: !!session,
+                    hasTokens: !!session.tokens,
+                    hasIdToken: !!session.tokens?.idToken,
+                    hasAccessToken: !!session.tokens?.accessToken
+                }, null, 2)}`, 'info');
                 
-                if (decoded.payload && decoded.payload.aud) {
-                    showResult(`AUDIENCE (aud) in JWT: ${decoded.payload.aud}`, 'success');
+                if (session.tokens?.idToken) {
+                    const token = session.tokens.idToken.toString();
+                    const decoded = decodeJWT(token);
+                    
+                    showResult(`✅ Authentication Successful!\n\nJWT Token Payload:\n${JSON.stringify(decoded.payload, null, 2)}`, 'success');
+                    
+                    // Update UI to show logged in state
+                    updateStatus('Logged in successfully!', 'success');
+                    document.getElementById('loginBtn').style.display = 'none';
+                    document.getElementById('logoutBtn').style.display = 'inline-block';
+                    document.getElementById('testFunctionBtn').style.display = 'inline-block';
+                } else {
+                    showResult('Not authenticated. Click "Login with Microsoft" to authenticate.', 'info');
                 }
-            } else {
-                showResult(`No id_token found in URL. The error shows aud=[77c7579a-8d92-4863-ac02-93d06c76dacc]\n\nThis means the JWT token's audience is: 77c7579a-8d92-4863-ac02-93d06c76dacc\n\nBut Cognito expects a different audience.`, 'error');
+            } catch (error) {
+                showResult(`Authentication check failed: ${error.message}`, 'error');
             }
         }
 
@@ -247,8 +269,10 @@
         // Initialize on page load
         initializeAmplify();
         
-        // Check for JWT token in URL parameters
-        checkForJWTInURL();
+        // Check authentication status after a short delay to allow OAuth flow to complete
+        setTimeout(() => {
+            checkAuthenticationStatus();
+        }, 1000);
     </script>
 </body>
 </html>

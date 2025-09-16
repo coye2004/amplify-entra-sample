@@ -17,7 +17,7 @@ export const auth = defineAuth({
           issuerUrl: 'https://login.microsoftonline.com/87b99afb-a707-40ce-9edb-59da9c64c857/v2.0',
           scopes: ['openid', 'profile', 'email'],
           attributeMapping: {
-            email: 'email',
+            email: 'preferred_username', // Try preferred_username as email
             givenName: 'given_name',
             familyName: 'family_name',
           },
