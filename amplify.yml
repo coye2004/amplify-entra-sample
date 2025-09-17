@@ -10,6 +10,7 @@ frontend:
     preBuild:
       commands:
         - npm ci
+        - node scripts/copy-outputs.js
     build:
       commands:
         - npm run build
