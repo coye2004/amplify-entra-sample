@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "aws-amplify": "^6.15.6",
-    "vite": "^7.1.5",
+    "vite": "^5.4.0",
     "@aws-sdk/client-lambda": "^3.0.0"
   },
   "devDependencies": {
