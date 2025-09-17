@@ -5,8 +5,14 @@ export const auth = defineAuth({
     email: true,
     externalProviders: {
       // required at this level
-      callbackUrls: ['http://localhost:5174/','https://main.d2j5lex9wj9ikc.amplifyapp.com/'],
-      logoutUrls: ['http://localhost:5174/','https://main.d2j5lex9wj9ikc.amplifyapp.com/'],
+      callbackUrls: [
+        'http://localhost:5174/',
+        'https://main.d2j5lex9wj9ikc.amplifyapp.com/'
+      ],
+      logoutUrls: [
+        'http://localhost:5174/',
+        'https://main.d2j5lex9wj9ikc.amplifyapp.com/'
+      ],
 
       // OIDC IdP definition
       oidc: [
