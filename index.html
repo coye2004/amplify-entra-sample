@@ -162,7 +162,7 @@
             try {
                 updateStatus('Redirecting to Microsoft login...', 'loading');
                 await signInWithRedirect({
-                    provider: 'AutodeskEntra'
+                    provider: 'AutodeskEntraIDTest'
                 });
             } catch (error) {
                 updateStatus('Login failed', 'error');
@@ -223,7 +223,9 @@
                     // Auto-redirect to login
                     setTimeout(async () => {
                         try {
-                            await signInWithRedirect();
+                            await signInWithRedirect({
+                                provider: 'AutodeskEntraIDTest'
+                            });
                         } catch (error) {
                             updateStatus('Login failed', 'error');
                             showResult(`Login error: ${error.message}`, 'error');
@@ -247,7 +249,9 @@
                 // Redirect to login after a short delay
                 setTimeout(async () => {
                     try {
-                        await signInWithRedirect();
+                        await signInWithRedirect({
+                            provider: 'AutodeskEntraIDTest'
+                        });
                     } catch (error) {
                         updateStatus('Login redirect failed', 'error');
                         showResult(`Login redirect error: ${error.message}`, 'error');
