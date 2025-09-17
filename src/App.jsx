@@ -167,8 +167,8 @@ function App() {
 
       const result = await client.graphql({
         query: `
-          mutation FetchUserData {  // ← Mutation name (can be anything)
-            getUserInfo             // ← Field name (must match schema)
+          mutation FetchUserData {
+            getUserInfo
           }
         `
       })
