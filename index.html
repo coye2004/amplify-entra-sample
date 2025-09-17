@@ -64,17 +64,26 @@
             border: 1px solid #bee5eb;
             color: #0c5460;
         }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 Amplify + Microsoft Entra ID Test</h1>
+        <h1>🚀 Amplify + Microsoft Entra ID</h1>
+        <p>Enterprise-grade authentication with GraphQL API</p>
         
         <div id="status" class="status loading">
             Initializing Amplify...
         </div>
 
-        <div>
+        <div class="button-group">
             <button id="loginBtn" class="button" disabled>Login with Microsoft</button>
             <button id="logoutBtn" class="button" disabled>Logout</button>
             <button id="testFunctionBtn" class="button" disabled>Test GraphQL API</button>
@@ -184,9 +193,6 @@
             const errorDescription = urlParams.get('error_description');
             const code = urlParams.get('code');
             
-            // Debug: Show URL parameters
-            showResult(`URL Parameters:\n${window.location.search}\n\nCode present: ${!!code}\nError: ${errorDescription || 'None'}`, 'info');
-            
             if (errorDescription) {
                 showResult(`Authentication Error:\n${decodeURIComponent(errorDescription)}`, 'error');
                 return;
@@ -195,27 +201,34 @@
             try {
                 // Check if user is already authenticated
                 const session = await fetchAuthSession();
-                showResult(`Session check result:\n${JSON.stringify({
-                    hasSession: !!session,
-                    hasTokens: !!session.tokens,
-                    hasIdToken: !!session.tokens?.idToken,
-                    hasAccessToken: !!session.tokens?.accessToken
-                }, null, 2)}`, 'info');
                 
                 if (session.tokens?.idToken) {
                     const token = session.tokens.idToken.toString();
                     const decoded = decodeJWT(token);
                     
-                    showResult(`✅ Authentication Successful!\n\nJWT Token Payload:\n${JSON.stringify(decoded.payload, null, 2)}`, 'success');
-                    
                     // Update UI to show logged in state
-                    updateStatus('Logged in successfully!', 'success');
+                    updateStatus('Welcome! You are logged in successfully.', 'success');
                     document.getElementById('loginBtn').style.display = 'none';
                     document.getElementById('logoutBtn').style.display = 'inline-block';
                     document.getElementById('testFunctionBtn').style.display = 'inline-block';
                     document.getElementById('getUserInfoBtn').style.display = 'inline-block';
+                    
+                    // Show detailed token information
+                    showResult(`✅ Welcome ${decoded.payload.email || 'User'}!\n\nYou are now authenticated with Microsoft Entra ID.\n\n🔑 JWT Token Information:\n\nHeader:\n${JSON.stringify(decoded.header, null, 2)}\n\nPayload:\n${JSON.stringify(decoded.payload, null, 2)}\n\n📝 Raw Token:\n${token}\n\nClick the buttons below to test the GraphQL API.`, 'success');
                 } else {
-                    showResult('Not authenticated. Click "Login with Microsoft" to authenticate.', 'info');
+                    // Not authenticated - automatically redirect to login
+                    updateStatus('Redirecting to Microsoft login...', 'loading');
+                    showResult('Redirecting to Microsoft Entra ID for authentication...', 'info');
+                    
+                    // Auto-redirect to login
+                    setTimeout(async () => {
+                        try {
+                            await signInWithRedirect();
+                        } catch (error) {
+                            updateStatus('Login failed', 'error');
+                            showResult(`Login error: ${error.message}`, 'error');
+                        }
+                    }, 1000);
                 }
             } catch (error) {
                 showResult(`Authentication check failed: ${error.message}`, 'error');
@@ -226,8 +239,20 @@
             try {
                 updateStatus('Logging out...', 'loading');
                 await signOut();
-                updateStatus('Logged out successfully', 'success');
-                showResult('You have been logged out successfully.');
+                
+                // After logout, redirect to login
+                updateStatus('Logged out successfully. Redirecting...', 'success');
+                showResult('You have been logged out successfully. Redirecting to login...', 'success');
+                
+                // Redirect to login after a short delay
+                setTimeout(async () => {
+                    try {
+                        await signInWithRedirect();
+                    } catch (error) {
+                        updateStatus('Login redirect failed', 'error');
+                        showResult(`Login redirect error: ${error.message}`, 'error');
+                    }
+                }, 2000);
             } catch (error) {
                 updateStatus('Logout failed', 'error');
                 showResult(`Logout error: ${error.message}`, 'error');
