@@ -1,9 +1,16 @@
 version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - npx ampx pipeline-deploy
 frontend:
   phases:
     preBuild:
       commands:
         - npm ci
+        # copy the freshly generated amplify_outputs.json into the app
+        - node scripts/copy-outputs.js
     build:
       commands:
         - npm run build
@@ -14,3 +21,4 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
+
