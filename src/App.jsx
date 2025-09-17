@@ -3,25 +3,6 @@ import { Amplify } from 'aws-amplify'
 import { signInWithRedirect, signOut, fetchAuthSession } from 'aws-amplify/auth'
 import { generateClient } from 'aws-amplify/api'
 
-const amplifyConfig = {
-  Auth: {
-    Cognito: {
-      userPoolId: 'us-west-2_1DAbGzRVO',
-      userPoolClientId: '1hn7n2kj9khg0cqkrk35jitpd',
-      loginWith: {
-        oauth: {
-          domain: '34803b7bf5170c140bb2.auth.us-west-2.amazoncognito.com',
-          scopes: ['openid', 'profile', 'email'],
-          redirectSignIn: ['http://localhost:5174/', 'https://main.d2j5lex9wj9ikc.amplifyapp.com'],
-          redirectSignOut: ['http://localhost:5174/', 'https://main.d2j5lex9wj9ikc.amplifyapp.com'],
-          responseType: 'code'
-        },
-        email: true
-      }
-    }
-  }
-}
-
 function App() {
   const [status, setStatus] = useState('Initializing Amplify...')
   const [statusType, setStatusType] = useState('loading')
@@ -62,15 +43,14 @@ function App() {
       if (response.ok) {
         const config = await response.json()
         Amplify.configure(config)
+        updateStatus('Amplify initialized successfully!', 'success')
+        setIsInitialized(true)
       } else {
-        Amplify.configure(amplifyConfig)
+        throw new Error('amplify_outputs.json not found')
       }
-
-      updateStatus('Amplify initialized successfully!', 'success')
-      setIsInitialized(true)
     } catch (error) {
-      updateStatus(`Failed to initialize Amplify: ${error.message}`, 'error')
-      showResult(`Error: ${error.message}\n\nMake sure you have:\n1. Started the Amplify sandbox (npm run dev)\n2. Updated the amplify_outputs.json file\n3. Set up your Microsoft Entra ID secrets`, 'error')
+      updateStatus('Failed to initialize Amplify', 'error')
+      showResult(`❌ Configuration Error: ${error.message}\n\n🔧 To fix this:\n\n1. Start the Amplify sandbox:\n   npm run dev\n\n2. Wait for the backend to deploy\n\n3. Make sure amplify_outputs.json is generated\n\n4. Refresh this page\n\n💡 The amplify_outputs.json file contains the correct configuration for your Amplify backend. Without it, the app cannot connect to your authentication and API services.`, 'error')
     }
   }
 
