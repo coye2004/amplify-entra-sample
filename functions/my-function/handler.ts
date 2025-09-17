@@ -31,12 +31,12 @@ export const handler = async (event: any) => {
         }
       };
       
-    case 'getUserInfo':
+    case 'getUserInfo':  // ← This MUST match the GraphQL field name exactly
       // Extract user info from the GraphQL context
       const user = event.identity?.claims || {};
       return {
         ok: true,
-        message: `User information retrieved successfully!`,
+        message: `User profile retrieved successfully!`,
         user: {
           email: user.email || user['cognito:username'],
           username: user['cognito:username'],
