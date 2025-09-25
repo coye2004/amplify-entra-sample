@@ -1,0 +1,34 @@
+<!-- Security Headers Configuration -->
+<!-- This file demonstrates security headers that should be configured at the server level -->
+
+<!-- Content Security Policy (CSP) -->
+<!-- 
+Recommended CSP headers for this application:
+
+Content-Security-Policy: 
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://*.amazonaws.com https://*.amazoncognito.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https:;
+  connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com https://login.microsoftonline.com;
+  font-src 'self';
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self' https://login.microsoftonline.com;
+  frame-ancestors 'none';
+
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+-->
+
+<!-- Security Notes:
+1. CSP prevents XSS attacks by controlling resource loading
+2. X-Frame-Options prevents clickjacking
+3. X-Content-Type-Options prevents MIME type sniffing
+4. X-XSS-Protection enables browser XSS filtering
+5. Referrer-Policy controls referrer information
+6. Permissions-Policy controls browser feature access
+-->

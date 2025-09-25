@@ -1,68 +1,59 @@
 export const handler = async (event: any) => {
-  // Secrets are exposed to the function via environment variables
-  const clientSecret = process.env['AUTODESK_ENTRA_ID_CLIENT_SECRET'];
+  // Security: Minimal logging for production
   const runtimeEnv = process.env['RUNTIME_ENV'];
   
-  console.log('GraphQL Event:', JSON.stringify(event, null, 2));
+  // Security: Only log in development
+  if (runtimeEnv === 'development') {
+    console.log('GraphQL Event received');
+  }
   
   // Handle different GraphQL operations
-  // Try multiple possible field name locations
   const fieldName = event.info?.fieldName || event.fieldName || event.operationName;
-  
-  console.log('Field Name:', fieldName);
-  console.log('Event Info:', event.info);
-  console.log('Event Arguments:', event.arguments);
   
   switch (fieldName) {
     case 'testFunction':
-      const input = event.arguments?.input || 'No input provided';
+      // Security: Sanitize and limit input
+      const input = (event.arguments?.input || 'No input provided').substring(0, 100);
+      
       return {
         ok: true,
         message: `GraphQL Lambda function executed successfully!`,
         input: input,
-        runtimeEnv,
-        hasSecret: Boolean(clientSecret && clientSecret.length > 0),
-        timestamp: new Date().toISOString(),
-        operation: 'testFunction',
-        debug: {
-          fieldName: fieldName,
-          arguments: event.arguments,
-          info: event.info
-        }
+        timestamp: new Date().toISOString()
+        // Security: Removed debug information, runtimeEnv, and hasSecret
       };
       
     case 'getUserInfo':  // ← This MUST match the GraphQL field name exactly
-      // Extract user info from the GraphQL context
+      // Security: Extract only safe user info, no sensitive claims
       const user = event.identity?.claims || {};
+      
+      // Security: Validate that we have a valid user
+      if (!user.email && !user['cognito:username']) {
+        return {
+          ok: false,
+          message: 'User not authenticated',
+          timestamp: new Date().toISOString()
+        };
+      }
+      
       return {
         ok: true,
         message: `User profile retrieved successfully!`,
         user: {
           email: user.email || user['cognito:username'],
           username: user['cognito:username'],
-          groups: user['cognito:groups'] || [],
           verified: user.email_verified
+          // Security: Removed groups, runtimeEnv, hasSecret, and debug info
         },
-        runtimeEnv,
-        hasSecret: Boolean(clientSecret && clientSecret.length > 0),
-        timestamp: new Date().toISOString(),
-        operation: 'getUserInfo',
-        debug: {
-          fieldName: fieldName,
-          identity: event.identity
-        }
+        timestamp: new Date().toISOString()
       };
       
     default:
       return {
         ok: false,
-        message: `Unknown operation: ${fieldName}`,
-        timestamp: new Date().toISOString(),
-        debug: {
-          fieldName: fieldName,
-          eventKeys: Object.keys(event),
-          fullEvent: event
-        }
+        message: 'Operation not supported',
+        timestamp: new Date().toISOString()
+        // Security: Removed debug information and field name exposure
       };
   }
 };
